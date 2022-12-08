@@ -1,4 +1,10 @@
-# Getting Started with Create React App
+# What is cardgame-ui
+
+For now, cardgame-ui allows me to learn [React](https://fr.reactjs.org/).
+
+I hope that, at the end of the project, it will be a very cool UI for my belote contrée game engine, available at [cardgame engine repo](https://github.com/sebastien-perpignane/cardgame)
+
+## Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
