@@ -31,7 +31,7 @@ interface GameState {
     team1Score?: number,
     team2Score?: number,
     maxScore?: number,
-    localPlayerName?: string,
+    localPlayerName: string,
     localPlayerHand?: CardModel[]
 }
 
@@ -48,7 +48,8 @@ export class Game extends React.Component<GameProps, GameState> {
         this.gameManager = new GameManager();
         this.state = {
             gameId: null,
-            players: []
+            players: [],
+            localPlayerName: ''
         };
         this.startNewGame = this.startNewGame.bind(this);
         this.handlePlayerNameChange = this.handlePlayerNameChange.bind(this);
@@ -147,7 +148,8 @@ export class Game extends React.Component<GameProps, GameState> {
             players: this.state.players.concat(playerStates),
             team1Score: gameModel.team1Score,
             team2Score: gameModel.team2Score,
-            maxScore: gameModel.maxScore
+            maxScore: gameModel.maxScore,
+            localPlayerName: ''
         });
     }
 
