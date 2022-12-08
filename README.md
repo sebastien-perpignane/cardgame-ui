@@ -4,6 +4,27 @@ For now, cardgame-ui allows me to learn [React](https://fr.reactjs.org/).
 
 I hope that, at the end of the project, it will be a very cool UI for my belote contrée game engine, available at [cardgame engine repo](https://github.com/sebastien-perpignane/cardgame)
 
+# If you want to run the project
+
+First, you will need to install [cardgame engine repo](https://github.com/sebastien-perpignane/cardgame) in your local mvn repository. Clone the repo and run :
+
+```shell
+./mvnw install
+```
+
+Secondly, you will need [cardgame web server](https://github.com/sebastien-perpignane/cardgame-websever) runnin. Clone the repo and execute :
+
+```shell
+./mvnw spring-boot:run
+```
+
+And finally, install Node, clone this repo and, at the root of the project dir, run :
+
+```shell
+npm install
+npm start
+```
+
 ## Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

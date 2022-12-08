@@ -31,6 +31,7 @@ interface GameState {
     team1Score?: number,
     team2Score?: number,
     maxScore?: number,
+    localPlayerName?: string,
     localPlayerHand?: CardModel[]
 }
 
@@ -50,6 +51,7 @@ export class Game extends React.Component<GameProps, GameState> {
             players: []
         };
         this.startNewGame = this.startNewGame.bind(this);
+        this.handlePlayerNameChange = this.handlePlayerNameChange.bind(this);
     }
 
 
@@ -109,7 +111,7 @@ export class Game extends React.Component<GameProps, GameState> {
             {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({playerName : 'Seb'})
+                body: JSON.stringify({playerName : this.state.localPlayerName})
             }
         ).then((response) => {
             return response.json() as Promise<GameModel>
@@ -120,12 +122,21 @@ export class Game extends React.Component<GameProps, GameState> {
     }
 
     async startNewGame() {
+
+        console.log("Player name when starting new game: " + this.state.localPlayerName)
+
+        if (this.state.localPlayerName === undefined || this.state.localPlayerName === '') {
+
+            alert("Please type a player name")
+            return;
+        }
+
         let gameId = await this.createGame();
         this.setState({gameId: gameId})
         await this.subscribeToGame(gameId);
         let gameModel = await this.joinGame(gameId);
 
-        let playerStates: PlayerState[] = gameModel.players.map((playerName, index) => {
+        let playerStates: PlayerState[] = gameModel.players.map((playerName) => {
             return {
               player: {name: playerName}
             };
@@ -138,6 +149,12 @@ export class Game extends React.Component<GameProps, GameState> {
             team2Score: gameModel.team2Score,
             maxScore: gameModel.maxScore
         });
+    }
+
+    handlePlayerNameChange(e: any) {
+        this.setState({
+            localPlayerName: e.target.value
+        })
     }
 
     render() {
@@ -177,6 +194,9 @@ export class Game extends React.Component<GameProps, GameState> {
                         <Player playerIndex={4} name={this.state.players[3].player.name}  />
                     </div>
                 }
+
+                {(this.state.gameId === null) && <label htmlFor='playerName'>Player name :</label> }
+                {(this.state.gameId === null) && <input type="text" id="playerName" value={this.state.localPlayerName} onChange={this.handlePlayerNameChange} />}
                 {(this.state.gameId === null) && <button onClick={this.startNewGame}>Start new game</button>}
 
                 {this.state.localPlayerHand && <PlayerHand cardImages={this.state.localPlayerHand} />}
