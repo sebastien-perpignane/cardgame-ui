@@ -6,13 +6,13 @@ I hope that, at the end of the project, it will be a very cool UI for my belote 
 
 # If you want to run the project
 
-First, you will need to install [cardgame engine repo](https://github.com/sebastien-perpignane/cardgame) in your local mvn repository. Clone the repo and run :
+First, you will need to install [cardgame engine](https://github.com/sebastien-perpignane/cardgame) in your local mvn repository. Clone the repo and run :
 
 ```shell
 ./mvnw install
 ```
 
-Secondly, you will need [cardgame web server](https://github.com/sebastien-perpignane/cardgame-websever) runnin. Clone the repo and execute :
+Secondly, you will need [cardgame web server](https://github.com/sebastien-perpignane/cardgame-websever) running. Clone the repo and execute :
 
 ```shell
 ./mvnw spring-boot:run
