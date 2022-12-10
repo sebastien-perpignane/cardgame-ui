@@ -11,3 +11,11 @@
     height: auto;
 }
 */
+
+.playable-true {
+
+}
+
+.playable-false {
+    opacity: 0.4;
+}

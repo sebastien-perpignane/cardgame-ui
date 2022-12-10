@@ -5,12 +5,12 @@ export interface BidModel {
     bidValueExpectedScore?: number,
     bidValueSuitRequired:boolean,
     bidValueDisplay: string,
-    bidSuit?: string
+    bidSuit: string | null
 }
 
 interface BidProps {
     bidValueDisplay: string,
-    bidSuit?: string
+    bidSuit: string | null
 
 }
 
@@ -20,8 +20,8 @@ export class ContreeBid extends React.Component<BidProps> {
         return (
 
             <div className={"bid"}>
-                <label className={"bidValue"}>Value: {this.props.bidValueDisplay}</label>
-                { this.props.bidSuit && <label className={"bidSuit"}>Suit: {this.props.bidSuit}</label> }
+                <p className={"bidValue"}>Value: {this.props.bidValueDisplay}</p>
+                { this.props.bidSuit && <p className={"bidSuit"}>Suit: {this.props.bidSuit}</p> }
             </div>
         );
     }
