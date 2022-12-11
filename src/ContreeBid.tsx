@@ -17,11 +17,10 @@ interface BidProps {
 export class ContreeBid extends React.Component<BidProps> {
 
     render() {
+        let bidSuit = this.props.bidSuit;
         return (
-
             <div className={"bid"}>
-                <p className={"bidValue"}>Value: {this.props.bidValueDisplay}</p>
-                { this.props.bidSuit && <p className={"bidSuit"}>Suit: {this.props.bidSuit}</p> }
+                <p className={"bidValue"}>Bid: {this.props.bidValueDisplay } { bidSuit === null ? '' : bidSuit }</p>
             </div>
         );
     }

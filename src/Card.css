@@ -2,15 +2,19 @@
     text-align: center;
 }*/
 
-/*
-.card img {
+div.ccard {
+    display: flex;
+    justify-content: center;
+}
+
+div.ccard img {
     display: block;
-    max-width:230px;
-    max-height:95px;
+    max-width:130px;
+    max-height:310px;
     width: auto;
     height: auto;
 }
-*/
+
 
 .playable-true {
 
@@ -18,4 +22,12 @@
 
 .playable-false {
     opacity: 0.4;
+}
+
+div.important-card {
+    border: purple solid 2px;
+}
+
+div.very-important-card {
+    border: red solid 2px;
 }

@@ -1,9 +1,11 @@
 import * as React from "react";
 import Card, {CardModel} from "./Card";
 import {BidModel, ContreeBid} from "./ContreeBid";
+import {CardPlaceHolder} from "./CardPlaceHolder";
 
 export interface PlayerModel {
-    name: string
+    name: string,
+    team?: string
 }
 
 interface PlayerProps {
@@ -19,11 +21,27 @@ export class Player extends React.Component<PlayerProps> {
         const card = this.props.lastPlayedCard
         const lastBid = this.props.lastBid
 
+        let lastPlayedCard: any
+        if (card === undefined) {
+            lastPlayedCard = <CardPlaceHolder />
+        }
+        else {
+            lastPlayedCard = <Card className={'lastPlayedCard'} card={card} clickHandler={() => {} } />
+        }
+
+        let bidValue = lastBid?.bidValueDisplay === undefined ? '' : lastBid.bidValueDisplay
+        let bidSuit = lastBid?.bidSuit === undefined ? '' : lastBid.bidSuit
+
         return (
-            <div className="player" key={this.props.playerIndex}>
-                <p>Player {this.props.playerIndex}: {this.props.name}</p>
-                {lastBid && <ContreeBid bidValueDisplay={lastBid.bidValueDisplay} bidSuit={lastBid.bidSuit}  />}
-                {(card !== undefined ) && <Card className={'lastPlayedCard'} card={card} clickHandler={() => {} } />}
+                <div className="player" key={this.props.playerIndex} style={{textAlign: "center"}} >
+                    <div style={ {display: "inline-block", verticalAlign: "middle"} }>
+                        <p>Player {this.props.playerIndex}: {this.props.name}</p>
+                        <ContreeBid bidValueDisplay={bidValue} bidSuit={bidSuit}  />
+                    </div>
+                    <div style={ {display: "inline-block", verticalAlign: "middle"} }>
+                        {lastPlayedCard}
+                    </div>
+
             </div>
         );
     }

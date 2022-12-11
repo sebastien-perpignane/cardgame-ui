@@ -12,7 +12,7 @@ export class PlayerHand extends React.Component<PlayerHandProps> {
     render() {
 
         let cardTags = this.props.handCards.map((handCard) => {
-            return <PlayableCard gameId={this.props.gameId} card={handCard.card} key={'playerHand-' + handCard.card.name} className="col-md-1" playable={handCard.playable} />
+            return <PlayableCard gameId={this.props.gameId} card={handCard.card} key={'playerHand-' + handCard.card.name} className="col" playable={handCard.playable} />
         });
         return (
             <div className="row">

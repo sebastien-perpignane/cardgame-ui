@@ -49,8 +49,17 @@ export class PlayableCard extends React.Component<PlayableCardProps> {
 
         let playableStyle: string = "playable-" + this.props.playable
 
+        let highlightStyle = '';
+        if (this.props.card.rank === 'J' || this.props.card.rank === '9') {
+            highlightStyle='very-important-card'
+        }
+
+        if (this.props.card.rank === 'A') {
+            highlightStyle='important-card'
+        }
+
         return (
-            <Card card={this.props.card} className={this.props.className + ' ' + playableStyle} clickHandler={ this.handlePlayCard } />
+            <Card card={this.props.card} className={this.props.className + ' ' + playableStyle + ' ' + highlightStyle} clickHandler={ this.handlePlayCard } />
         );
     }
 }

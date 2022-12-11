@@ -1,13 +1,14 @@
 import * as React from "react";
 import SockJS from "sockjs-client";
 import * as Stomp from "stompjs";
-import {Player, PlayerModel} from "./Player";
+import {PlayerModel} from "./Player";
 import {PlayerHand} from "./PlayerHand";
 import {CardModel} from "./Card";
 import {BidModel} from "./ContreeBid";
-import {BidTurnEventData, BidValue, GameManager, PlacedBidEventData, PlayTurnEventData} from "./GameManager";
+import {BidValue, GameManager} from "./GameManager";
 import {CSSProperties} from "react";
 import 'bootstrap';
+import {Players} from "./Players";
 
 interface GameModel {
     gameId: string,
@@ -35,7 +36,7 @@ export interface PlayerState {
 }
 
 interface LocalPlayerState extends PlayerState {
-    hand: HandCardModel,
+    hand: HandCardModel[],
     allowedBidValues: BidValue[]
 }
 
@@ -66,7 +67,7 @@ export class Game extends React.Component<GameProps, GameState> {
         super(props);
         let socket = new SockJS('http://localhost:8080/stomp');
         this.stompClient = Stomp.over(socket);
-        this.gameManager = new GameManager();
+        this.gameManager = new GameManager(this, this.stompClient);
         this.state = {
             gameId: null,
             players: [],
@@ -88,14 +89,6 @@ export class Game extends React.Component<GameProps, GameState> {
         })
     }
 
-    updateLocalPlayerHand(handCards: HandCardModel[]) {
-
-        this.setState({
-           localPlayerHand: handCards
-        });
-
-    }
-
     componentDidMount() {
 
         //stompClient.debug = function(str) {};
@@ -108,43 +101,6 @@ export class Game extends React.Component<GameProps, GameState> {
     async createGame() {
         const response = await fetch("http://localhost:8080/contree/game/create", {method: 'POST', mode: "cors"})
         return response.text();
-    }
-
-    async subscribeToGame(gameId: string) {
-        //let localClient = this.stompClient;
-        this.stompClient.subscribe('/topic/game/' + gameId, (message: Stomp.Message) => {
-            let event = JSON.parse(message.body);
-            let eventData = event.eventData;
-
-            if (typeof eventData === 'string' || eventData instanceof String) {
-                console.log('string event data ' + eventData)
-            }
-            else {
-                switch(event.type) {
-                    case 'PLAY_TURN':
-                        let playTurnEventData = event.eventData as PlayTurnEventData
-                        this.gameManager.managePlayTurn(this, playTurnEventData);
-                        break
-                    case 'BID_TURN':
-                        //manageBidTurn(event)
-                        let bidTurnData = event.eventData as BidTurnEventData
-                        this.gameManager.manageBidTurn(this, bidTurnData);
-                        break
-                    case 'PLACED_BID':
-                        let placedBidData = event.eventData as PlacedBidEventData
-                        this.gameManager.managePlacedBid(this, placedBidData);
-                        break;
-                    case 'DEAL_OVER':
-
-                        break;
-                    default:
-                        let eventDataAsStr = JSON.stringify(eventData);
-                        console.log('default event type ' + eventDataAsStr)
-                        //displayPlayerMessage(eventDataAsStr);
-                }
-            }
-            return;
-        })
     }
 
     async joinGame(gameId: string): Promise<GameModel> {
@@ -174,8 +130,8 @@ export class Game extends React.Component<GameProps, GameState> {
         }
 
         let gameId = await this.createGame();
-        this.setState({gameId: gameId})
-        await this.subscribeToGame(gameId);
+        //this.setState({gameId: gameId})
+        await this.gameManager.subscribeToGame(gameId);
         let gameModel = await this.joinGame(gameId);
 
         let playerStates: PlayerState[] = gameModel.players.map((playerName) => {
@@ -184,6 +140,8 @@ export class Game extends React.Component<GameProps, GameState> {
                 playerStatus: PlayerStatus.WAITING
             };
         });
+
+        console.log('playerStates on start game : ' + playerStates)
 
         this.setState({
             gameId: gameModel.gameId,
@@ -206,58 +164,43 @@ export class Game extends React.Component<GameProps, GameState> {
 
     render() {
 
-        /*let card1: CardModel = {
-            rank: "8",
-            suit: "HEARTS",
-            display: "8H",
-            name: "EIGHT_HEART"
-        }
-
-        let card2: CardModel = {
-            rank: "JACK",
-            suit: "HEARTS",
-            display: "JH",
-            name: "JACK_HEART"
-        }
-
-        let card3: CardModel = {
-            rank: "ACE",
-            suit: "SPADES",
-            display: "AS",
-            name: "ACE_SPADE"
-        }
-
-        let playerHandCards: CardModel[] = [card1, card2, card3]*/
-
         return (
-            <div>
-                {this.state.gameId !== null && <h1>Game ID : {this.state.gameId}</h1>}
+            <div id='game'>
 
-                <div className={'row'}>
 
-                    {this.state.players.length > 0 &&
-                        <div className='col-md-6'>
-                            <Player playerIndex={1} name={this.state.players[0].player.name}  lastBid={this.state.players[0].lastBid} />
-                            <Player playerIndex={2} name={this.state.players[1].player.name}  lastBid={this.state.players[1].lastBid} />
-                            <Player playerIndex={3} name={this.state.players[2].player.name}  lastBid={this.state.players[2].lastBid} />
-                            <Player playerIndex={4} name={this.state.players[3].player.name}  lastBid={this.state.players[3].lastBid} />
-                        </div>
+                    {(this.state.gameId === null) &&
+                    <div id='start-game-form'>
+                        <label htmlFor='playerName'>Player name :</label>
+                        <input type="text" id="playerName" value={this.state.localPlayerName} onChange={this.handlePlayerNameChange} />
+                        <button onClick={this.startNewGame} className='btn btn-outline-primary'>Start new game</button>
+                    </div>
                     }
 
-                    {this.state.gameId !== null &&
-                        <div id='game-score' className={'col-md-6'}>
-                            <p>Team 1 : {this.state.team1Score}</p>
-                            <p>Team 2 : {this.state.team2Score}</p>
+
+                {this.state.gameId !== null &&
+                    <div id='game-main'>
+                        <h1>Game ID : {this.state.gameId}</h1>
+                        <div id='info' className='row'>
+
+                            <div id='players-container' className='col-md-6'>
+                            <Players players={this.state.players} />
+                            </div>
+
+                            <div id='game-score' className={'col-md-6'}>
+                                <h1>Game score</h1>
+                                <p>Team 1 : {this.state.team1Score}</p>
+                                <p>Team 2 : {this.state.team2Score}</p>
+                            </div>
+
                         </div>
-                    }
+                    </div>
+                }
+
+                <div id='local-player-panel'>
+                    {(this.state.localPlayerHand && this.state.gameId !== null ) && <PlayerHand gameId={this.state.gameId} handCards={this.state.localPlayerHand} />}
+                    {this.state.gameId != null && <SelectBidComponent gameId={this.state.gameId} playerName={this.state.localPlayerName} allowedBids={this.state.allowedBids} /> }
                 </div>
 
-                {(this.state.gameId === null) && <label htmlFor='playerName'>Player name :</label> }
-                {(this.state.gameId === null) && <input type="text" id="playerName" value={this.state.localPlayerName} onChange={this.handlePlayerNameChange} />}
-                {(this.state.gameId === null) && <button onClick={this.startNewGame}>Start new game</button>}
-
-                {(this.state.localPlayerHand && this.state.gameId !== null ) && <PlayerHand gameId={this.state.gameId} handCards={this.state.localPlayerHand} />}
-                {this.state.gameId != null && <SelectBidComponent gameId={this.state.gameId} playerName={this.state.localPlayerName} allowedBids={this.state.allowedBids} /> }
             </div>
         );
 
@@ -324,7 +267,7 @@ class SelectBidComponent extends React.Component<SelectBidProps, SelectBidState>
     render() {
 
         const options = this.props.allowedBids.map(bv => {
-            return <option value={bv.name}>{bv.display}</option>
+            return <option value={bv.name} key={bv.name}>{bv.display}</option>
         });
 
         let bidSuitStyle: CSSProperties = {fontSize: '32pt'}
@@ -334,6 +277,9 @@ class SelectBidComponent extends React.Component<SelectBidProps, SelectBidState>
             return (
 
                     <div id="select-bid" className='row'>
+
+                        <p>actual bid value: {this.state.bidValue}</p>
+
                         <div className="form-group col-md-6">
                             <label htmlFor="bid-value">Bid value</label>
                             <select name={'bid-value'} className="form-control" style={bidValueStyle} onChange={ (e) => this.handleBidValueChange(e.target.value) }>
@@ -349,7 +295,7 @@ class SelectBidComponent extends React.Component<SelectBidProps, SelectBidState>
                                 <option value="CLUBS">♣</option>
                             </select>
                         </div>
-                        <button id='place-bid' onClick={ () => this.handlePlaceBid() }>Place a fucking bid</button>
+                        <button id='place-bid' onClick={ () => this.handlePlaceBid() } className='btn btn-outline-primary'>Place a bid</button>
                     </div>
             );
         }
@@ -357,4 +303,14 @@ class SelectBidComponent extends React.Component<SelectBidProps, SelectBidState>
         return (<div id="select-bid"></div>)
     }
 
+
+    componentDidUpdate(prevProps: Readonly<SelectBidProps>, prevState: Readonly<SelectBidState>, snapshot?: any) {
+        // FIXME ugly solution to reinit state
+        if (this.props.allowedBids.length !== prevProps.allowedBids.length ) {
+            this.setState({
+               bidValue: 'PASS',
+               bidSuit: 'DIAMONDS'
+            });
+        }
+    }
 }

@@ -23,8 +23,9 @@ class Card extends React.Component<CardProps> {
         let cardImg: string = card.rank + card.suit.slice(0, 1)
 
         return (
-
-            <div className={this.props.className + ' card'} id={this.props.card?.display} onClick={this.props.clickHandler}>
+            <div className={this.props.className + ' ccard'}
+                id={this.props.card?.display}
+                onClick={this.props.clickHandler}>
                 <img alt="card" src={'images/' + cardImg + '.png'} />
             </div>
         );
