@@ -193,9 +193,13 @@ export class GameManager {
 
     private manageTrickStarted() {
 
-        let lastTrickCards: CardModel[] = this.game.state.players.map(p => {
-            return p.lastPlayedCard === undefined ? {display: '', name:'', rank: '', suit:''} : p.lastPlayedCard
+        let lastTrickCards: CardModel[] = []
+        this.game.state.players.forEach(p => {
+            if (p.lastPlayedCard !== undefined) {
+                lastTrickCards.push(p.lastPlayedCard)
+            }
         })
+
 
         let newPlayers: PlayerState[] = [...this.game.state.players]
         newPlayers.forEach(np => {

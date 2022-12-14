@@ -10,6 +10,7 @@ import 'bootstrap';
 import {Players} from "../players/Players";
 import { CardModel } from "../cards/Card";
 import { Trick } from "./Trick";
+import {SelectBid} from "./SelectBid";
 
 interface GameModel {
     gameId: string,
@@ -168,13 +169,6 @@ export class Game extends React.Component<GameProps, GameState> {
 
     render() {
 
-        let card1: CardModel = {display:'JS', name:'JACK_SPADE', rank:'J', suit:'SPACES'}
-        let card2: CardModel = {display:'9H', name:'NINE_HEART', rank:'9', suit:'HEARTS'}
-        let card3: CardModel = {display:'JC', name:'JACK_CLUB', rank:'J', suit:'CLUBS'}
-        let card4: CardModel = {display:'AC', name:'ACE_CLUB', rank:'A', suit:'CLUBS'}
-
-        let lastTrickCards: CardModel[] = [card1, card2, card3, card4]
-
         return (
             <div id='game'>
 
@@ -190,7 +184,7 @@ export class Game extends React.Component<GameProps, GameState> {
 
                 {this.state.gameId !== null &&
                     <div id='game-main'>
-                        <h1>Game ID : {this.state.gameId}</h1>
+                        <p>Game ID : {this.state.gameId}</p>
                         <div id='info' className='row'>
 
                             <div id='players-container' className='col-md-4'>
@@ -202,7 +196,7 @@ export class Game extends React.Component<GameProps, GameState> {
                             </div>
 
                             <div id='game-score' className={'col-md-4'}>
-                                <h1>Game score</h1>
+                                <p>Game score</p>
                                 <p>Team 1 : {this.state.team1Score}</p>
                                 <p>Team 2 : {this.state.team2Score}</p>
                             </div>
@@ -213,7 +207,7 @@ export class Game extends React.Component<GameProps, GameState> {
 
                 <div id='local-player-panel'>
                     {(this.state.localPlayerHand && this.state.gameId !== null ) && <PlayerHand gameId={this.state.gameId} handCards={this.state.localPlayerHand} />}
-                    {this.state.gameId != null && <SelectBidComponent gameId={this.state.gameId} playerName={this.state.localPlayerName} allowedBids={this.state.allowedBids} /> }
+                    {this.state.gameId != null && <SelectBid gameId={this.state.gameId} playerName={this.state.localPlayerName} allowedBids={this.state.allowedBids} /> }
                 </div>
 
             </div>
