@@ -1,6 +1,6 @@
 import * as React from "react";
-import {PlayableCard} from "./PlayableCard";
-import {HandCardModel} from "./Game";
+import { PlayableCard } from "../cards/PlayableCard";
+import { HandCardModel } from "../game/Game";
 
 export interface PlayerHandProps {
     gameId: string,

@@ -1,7 +1,7 @@
 import * as React from "react";
-import Card, {CardModel} from "./Card";
-import {BidModel, ContreeBid} from "./ContreeBid";
-import {CardPlaceHolder} from "./CardPlaceHolder";
+import Card, { CardModel } from "../cards/Card";
+import { CardPlaceHolder } from "../cards/CardPlaceHolder";
+import { BidModel, ContreeBid } from "../game/ContreeBid";
 
 export interface PlayerModel {
     name: string,
@@ -26,19 +26,19 @@ export class Player extends React.Component<PlayerProps> {
             lastPlayedCard = <CardPlaceHolder />
         }
         else {
-            lastPlayedCard = <Card className={'lastPlayedCard'} card={card} clickHandler={() => {} } />
+            lastPlayedCard = <Card className={'lastPlayedCard'} card={card} clickHandler={() => {} } cardSize='small' />
         }
 
         let bidValue = lastBid?.bidValueDisplay === undefined ? '' : lastBid.bidValueDisplay
         let bidSuit = lastBid?.bidSuit === undefined ? '' : lastBid.bidSuit
 
         return (
-                <div className="player" key={this.props.playerIndex} style={{textAlign: "center"}} >
-                    <div style={ {display: "inline-block", verticalAlign: "middle"} }>
-                        <p>Player {this.props.playerIndex}: {this.props.name}</p>
+                <div className="player" key={this.props.playerIndex} style={{display: "grid", gridTemplateColumns: '2fr 1fr'}} >
+                    <div style={ {display: "inline-block", verticalAlign: "middle", textAlign: "left"} }>
+                        <div style={{alignContent: 'center'}}>Player {this.props.playerIndex}: {this.props.name}</div>
                         <ContreeBid bidValueDisplay={bidValue} bidSuit={bidSuit}  />
                     </div>
-                    <div style={ {display: "inline-block", verticalAlign: "middle"} }>
+                    <div style={ {display: "inline", verticalAlign: "middle"} }>
                         {lastPlayedCard}
                     </div>
 

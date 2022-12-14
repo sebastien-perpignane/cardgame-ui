@@ -13,6 +13,16 @@ div.ccard img {
     max-height:310px;
     width: auto;
     height: auto;
+    border-radius: 7%;
+}
+
+div.ccard-small img {
+    display: block;
+    max-width:65px;
+    max-height:155px;
+    width: auto;
+    height: auto;
+    border-radius: 7%;
 }
 
 
@@ -24,10 +34,10 @@ div.ccard img {
     opacity: 0.4;
 }
 
-div.important-card {
+div.important-card img {
     border: purple solid 2px;
 }
 
-div.very-important-card {
+div.very-important-card img {
     border: red solid 2px;
 }

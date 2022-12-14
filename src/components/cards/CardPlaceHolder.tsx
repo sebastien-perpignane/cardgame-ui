@@ -9,7 +9,7 @@ export class CardPlaceHolder extends React.Component {
     render() {
 
         return (
-            <Card className={''} card={this.fakeCard}  />
+            <Card className={''} card={this.fakeCard} cardSize='small'  />
         );
 
     }

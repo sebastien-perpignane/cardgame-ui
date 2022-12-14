@@ -1,0 +1,9 @@
+#trick-container {
+    justify-content: center;
+    text-align: center;
+    width: 30%;
+}
+
+#trick-card-container {
+    display: flex;
+}

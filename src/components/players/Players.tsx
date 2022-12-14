@@ -1,7 +1,7 @@
 import * as React from 'react';
+import { PlayerState } from '../game/Game';
 
 import {Player} from './Player';
-import {PlayerState} from "./Game";
 
 export interface PlayersProps {
     players: PlayerState[]
@@ -14,7 +14,7 @@ export class Players extends React.Component<PlayersProps> {
 
         let players = this.props.players
 
-        if (players.length == 0) {
+        if (players.length === 0) {
             return (<div></div>)
         }
 

@@ -1,14 +1,15 @@
 import * as React from "react";
 import SockJS from "sockjs-client";
 import * as Stomp from "stompjs";
-import {PlayerModel} from "./Player";
-import {PlayerHand} from "./PlayerHand";
-import {CardModel} from "./Card";
+import {PlayerModel} from "../players/Player";
+import {PlayerHand} from "../players/PlayerHand";
 import {BidModel} from "./ContreeBid";
-import {BidValue, GameManager} from "./GameManager";
+import {BidValue, GameManager} from "../../services/GameManager";
 import {CSSProperties} from "react";
 import 'bootstrap';
-import {Players} from "./Players";
+import {Players} from "../players/Players";
+import { CardModel } from "../cards/Card";
+import { Trick } from "./Trick";
 
 interface GameModel {
     gameId: string,
@@ -49,7 +50,8 @@ interface GameState {
     localPlayerName: string,
     localPlayerHand: HandCardModel[],
     localPlayerState: PlayerState | null,
-    allowedBids: BidValue[]
+    allowedBids: BidValue[],
+    lastTrickCards: CardModel[]
 }
 
 export interface HandCardModel {
@@ -68,6 +70,11 @@ export class Game extends React.Component<GameProps, GameState> {
         let socket = new SockJS('http://localhost:8080/stomp');
         this.stompClient = Stomp.over(socket);
         this.gameManager = new GameManager(this, this.stompClient);
+        //stompClient.debug = function(str) {};
+        this.stompClient.connect({}, function (frame) {
+            //this.stompClient.setConnected(true);
+            console.log('Connected: ' + frame);
+        });
         this.state = {
             gameId: null,
             players: [],
@@ -77,7 +84,8 @@ export class Game extends React.Component<GameProps, GameState> {
             allowedBids: [],
             team1Score: 0,
             team2Score: 0,
-            maxScore: 1000
+            maxScore: 1000,
+            lastTrickCards: []
         };
         this.startNewGame = this.startNewGame.bind(this);
         this.handlePlayerNameChange = this.handlePlayerNameChange.bind(this);
@@ -91,11 +99,7 @@ export class Game extends React.Component<GameProps, GameState> {
 
     componentDidMount() {
 
-        //stompClient.debug = function(str) {};
-        this.stompClient.connect({}, function (frame) {
-            //this.stompClient.setConnected(true);
-            console.log('Connected: ' + frame);
-        });
+        
     }
 
     async createGame() {
@@ -164,6 +168,13 @@ export class Game extends React.Component<GameProps, GameState> {
 
     render() {
 
+        let card1: CardModel = {display:'JS', name:'JACK_SPADE', rank:'J', suit:'SPACES'}
+        let card2: CardModel = {display:'9H', name:'NINE_HEART', rank:'9', suit:'HEARTS'}
+        let card3: CardModel = {display:'JC', name:'JACK_CLUB', rank:'J', suit:'CLUBS'}
+        let card4: CardModel = {display:'AC', name:'ACE_CLUB', rank:'A', suit:'CLUBS'}
+
+        let lastTrickCards: CardModel[] = [card1, card2, card3, card4]
+
         return (
             <div id='game'>
 
@@ -182,11 +193,15 @@ export class Game extends React.Component<GameProps, GameState> {
                         <h1>Game ID : {this.state.gameId}</h1>
                         <div id='info' className='row'>
 
-                            <div id='players-container' className='col-md-6'>
+                            <div id='players-container' className='col-md-4'>
                             <Players players={this.state.players} />
                             </div>
 
-                            <div id='game-score' className={'col-md-6'}>
+                            <div id='last-trick' className="col-md-4">
+                                <Trick cards={this.state.lastTrickCards} trump={{display:'', name:'HEARTS'}} />
+                            </div>
+
+                            <div id='game-score' className={'col-md-4'}>
                                 <h1>Game score</h1>
                                 <p>Team 1 : {this.state.team1Score}</p>
                                 <p>Team 2 : {this.state.team2Score}</p>

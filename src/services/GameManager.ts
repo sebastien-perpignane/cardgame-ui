@@ -1,7 +1,8 @@
-import {CardModel} from "./Card";
-import {Game, HandCardModel, PlayerState} from "./Game";
+//import {Game, HandCardModel, PlayerState} from 
 import * as Stomp from "stompjs";
-import {PlayerModel} from "./Player";
+import {PlayerModel} from "../components/players/Player";
+import { Game, HandCardModel, PlayerState } from "../components/game/Game";
+import { CardModel } from "../components/cards/Card";
 
 
 export interface BidValue {
@@ -11,7 +12,7 @@ export interface BidValue {
     name: string
 }
 
-interface CardSuit {
+export interface CardSuit {
     name: string,
     display: string
 }
@@ -123,7 +124,8 @@ export class GameManager {
 
         this.game.setLocalPlayerHand(localPlayerHand)
         this.game.setState({
-            allowedBids: bidTurnEventData.allowedBidValues
+            allowedBids: bidTurnEventData.allowedBidValues,
+            lastTrickCards: []
         })
     }
 
@@ -191,13 +193,18 @@ export class GameManager {
 
     private manageTrickStarted() {
 
-        console.debug('New trick, player cleanup')
+        let lastTrickCards: CardModel[] = this.game.state.players.map(p => {
+            return p.lastPlayedCard === undefined ? {display: '', name:'', rank: '', suit:''} : p.lastPlayedCard
+        })
 
         let newPlayers: PlayerState[] = [...this.game.state.players]
         newPlayers.forEach(np => {
             np.lastPlayedCard = undefined
         })
-        this.game.setState({players: newPlayers})
+        this.game.setState({
+            players: newPlayers,
+            lastTrickCards: lastTrickCards
+        })
     }
 
     async sleep() {
