@@ -5,7 +5,6 @@ import {PlayerModel} from "../players/Player";
 import {PlayerHand} from "../players/PlayerHand";
 import {BidModel} from "./ContreeBid";
 import {BidValue, GameManager} from "../../services/GameManager";
-import {CSSProperties} from "react";
 import 'bootstrap';
 import {Players} from "../players/Players";
 import { CardModel } from "../cards/Card";
@@ -52,7 +51,9 @@ interface GameState {
     localPlayerHand: HandCardModel[],
     localPlayerState: PlayerState | null,
     allowedBids: BidValue[],
-    lastTrickCards: CardModel[]
+    lastTrickCards: CardModel[],
+    importantCardsFilter?: (cm: CardModel) => boolean,
+    veryImportantCardsFilter?:(cm: CardModel) => boolean
 }
 
 export interface HandCardModel {
@@ -206,7 +207,7 @@ export class Game extends React.Component<GameProps, GameState> {
                 }
 
                 <div id='local-player-panel'>
-                    {(this.state.localPlayerHand && this.state.gameId !== null ) && <PlayerHand gameId={this.state.gameId} handCards={this.state.localPlayerHand} />}
+                    {(this.state.localPlayerHand && this.state.gameId !== null ) && <PlayerHand importantFilter={this.state.importantCardsFilter} veryImportantFilter={this.state.veryImportantCardsFilter} gameId={this.state.gameId} handCards={this.state.localPlayerHand} />}
                     {this.state.gameId != null && <SelectBid gameId={this.state.gameId} playerName={this.state.localPlayerName} allowedBids={this.state.allowedBids} /> }
                 </div>
 
@@ -215,111 +216,4 @@ export class Game extends React.Component<GameProps, GameState> {
 
     }
 
-}
-
-interface SelectBidProps {
-    gameId: string,
-    playerName: string,
-    allowedBids: BidValue[]
-}
-
-interface SelectBidState {
-    bidValue: string,
-    bidSuit: string
-}
-
-
-class SelectBidComponent extends React.Component<SelectBidProps, SelectBidState> {
-
-    constructor(props: SelectBidProps) {
-        super(props);
-        this.handlePlaceBid = this.handlePlaceBid.bind(this)
-        this.state = {
-            bidValue: 'PASS',
-            bidSuit: 'DIAMONDS'
-        }
-    }
-
-    handlePlaceBid() {
-        fetch(
-            'http://localhost:8080/contree/game/' +  this.props.gameId + '/place-bid',
-            {
-                method: 'POST',
-                body: JSON.stringify({
-                    playerName: this.props.playerName,
-                    bidValue: this.state.bidValue,
-                    cardSuit: this.state.bidSuit
-                }),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }
-        ).then(response => {
-            if (response.status / 100 !== 2) {
-                console.error('placeBid: ça a foiré gros')
-            }
-        });
-    }
-
-    handleBidValueChange(bidValue: string) {
-        this.setState({
-            bidValue: bidValue
-        })
-    }
-
-    handleBidSuitChange(bidSuit: string) {
-        this.setState({
-            bidSuit: bidSuit
-        })
-    }
-
-    render() {
-
-        const options = this.props.allowedBids.map(bv => {
-            return <option value={bv.name} key={bv.name}>{bv.display}</option>
-        });
-
-        let bidSuitStyle: CSSProperties = {fontSize: '32pt'}
-        let bidValueStyle: CSSProperties = {fontSize: '32pt', width:'100%'}
-
-        if (this.props.allowedBids.length > 0) {
-            return (
-
-                    <div id="select-bid" className='row'>
-
-                        <p>actual bid value: {this.state.bidValue}</p>
-
-                        <div className="form-group col-md-6">
-                            <label htmlFor="bid-value">Bid value</label>
-                            <select name={'bid-value'} className="form-control" style={bidValueStyle} onChange={ (e) => this.handleBidValueChange(e.target.value) }>
-                                {options}
-                            </select>
-                        </div>
-                        <div className="form-group col-md-6">
-                            <label htmlFor="bid-suit">Bid suit</label>
-                            <select id="bid-suit" className="form-control" style={bidSuitStyle} onChange={(e) => this.handleBidSuitChange(e.target.value)}>
-                                <option value="DIAMONDS">♦</option>
-                                <option value="HEARTS">♥</option>
-                                <option value="SPADES">♠</option>
-                                <option value="CLUBS">♣</option>
-                            </select>
-                        </div>
-                        <button id='place-bid' onClick={ () => this.handlePlaceBid() } className='btn btn-outline-primary'>Place a bid</button>
-                    </div>
-            );
-        }
-
-        return (<div id="select-bid"></div>)
-    }
-
-
-    componentDidUpdate(prevProps: Readonly<SelectBidProps>, prevState: Readonly<SelectBidState>, snapshot?: any) {
-        // FIXME ugly solution to reinit state
-        if (this.props.allowedBids.length !== prevProps.allowedBids.length ) {
-            this.setState({
-               bidValue: 'PASS',
-               bidSuit: 'DIAMONDS'
-            });
-        }
-    }
 }

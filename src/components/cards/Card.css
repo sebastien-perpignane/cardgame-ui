@@ -27,7 +27,7 @@ div.ccard-small img {
 
 
 .playable-true {
-
+    cursor: pointer;
 }
 
 .playable-false {

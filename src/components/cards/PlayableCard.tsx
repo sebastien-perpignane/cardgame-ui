@@ -1,12 +1,21 @@
-import Card, {CardProps} from "./Card";
+import Card, {CardModel, CardProps} from "./Card";
 import * as React from "react";
 
 interface PlayableCardProps extends CardProps {
     playable: boolean,
-    gameId: string
+    gameId: string,
+    importantCardsFilter?: (cm: CardModel) => boolean,
+    veryImportantCardsFilter?: (cm: CardModel) => boolean
 }
 
 export class PlayableCard extends React.Component<PlayableCardProps> {
+    
+    // TODO test if it is needed
+    public static defaultProps = {
+        importantCardsFilter: (cm: CardModel) => { return false },
+        veryImportantCardsFilter: (cm: CardModel) => { return false }
+    }
+
     constructor(props: PlayableCardProps) {
         super(props);
         this.handlePlayCard = this.handlePlayCard.bind(this);
@@ -22,6 +31,7 @@ export class PlayableCard extends React.Component<PlayableCardProps> {
 
     }
 
+    // TODO pass callback as prop, to avoid passing gameId
     playCard() {
         fetch(
             'http://localhost:8080/contree/game/' + this.props.gameId + '/play-card',
@@ -50,13 +60,25 @@ export class PlayableCard extends React.Component<PlayableCardProps> {
         let playableStyle: string = "playable-" + this.props.playable
 
         let highlightStyle = '';
-        if (this.props.card.rank === 'J' || this.props.card.rank === '9') {
+
+        let importantFilter = this.props.importantCardsFilter === undefined ? () => { return true} : this.props.importantCardsFilter;
+        let veryImportantFilter = this.props.veryImportantCardsFilter === undefined ? () => { return true} : this.props.veryImportantCardsFilter;
+
+
+        if (importantFilter(this.props.card)) {
+            highlightStyle='important-card'
+        }
+        if (veryImportantFilter(this.props.card)) {
+            highlightStyle='very-important-card'
+        }
+
+        /*if (this.props.card.rank === 'J' || this.props.card.rank === '9') {
             highlightStyle='very-important-card'
         }
 
         if (this.props.card.rank === 'A') {
             highlightStyle='important-card'
-        }
+        }*/
 
         return (
             <Card card={this.props.card} className={this.props.className + ' ' + playableStyle + ' ' + highlightStyle} clickHandler={ this.handlePlayCard } />

@@ -52,10 +52,21 @@ export interface EndOfDealEventData {
     team2Score: number
 }
 
+interface TrickStartedEventData {
+    trickId: string,
+    trumpSuit: CardSuit
+}
+
 interface PlayedCardEventData {
     player: PlayerModel,
     card: CardModel
 }
+
+const bidImportantCardsFilter = (cm: CardModel) => { return cm.rank === 'A' }
+const bidVeryImportantCardsFilter = (cm: CardModel) => { return cm.rank === 'J' || cm.rank === '9' }
+
+const playImportantCardsFilter = (cm: CardModel) => { return false }
+const playVeryImportantCardsFilter = (trumpSuit: string) => (cm: CardModel) => { return cm.suit === trumpSuit }
 
 export class GameManager {
 
@@ -100,7 +111,8 @@ export class GameManager {
                     this.managePlayedCard(playedCardData)
                     break
                 case 'TRICK_STARTED':
-                    this.manageTrickStarted()
+                    let trickStartedData = event.eventData as TrickStartedEventData
+                    this.manageTrickStarted(trickStartedData.trumpSuit.name)
                     break
                 default:
                     let eventDataAsStr = JSON.stringify(eventData);
@@ -125,7 +137,9 @@ export class GameManager {
         this.game.setLocalPlayerHand(localPlayerHand)
         this.game.setState({
             allowedBids: bidTurnEventData.allowedBidValues,
-            lastTrickCards: []
+            lastTrickCards: [],
+            importantCardsFilter: bidImportantCardsFilter,
+            veryImportantCardsFilter: bidVeryImportantCardsFilter
         })
     }
 
@@ -173,7 +187,8 @@ export class GameManager {
             team1Score: this.game.state.team1Score + endOfDealEventData.team1Score,
             team2Score: this.game.state.team2Score + endOfDealEventData.team2Score
         })
-        this.manageTrickStarted()
+        // FIXME 
+        this.manageTrickStarted("fuck")
     }
 
     managePlayedCard(playedCardData : PlayedCardEventData) {
@@ -191,7 +206,7 @@ export class GameManager {
         this.game.setState({players: newPlayers})
     }
 
-    private manageTrickStarted() {
+    private manageTrickStarted(trumpSuit: string) {
 
         let lastTrickCards: CardModel[] = []
         this.game.state.players.forEach(p => {
@@ -205,9 +220,14 @@ export class GameManager {
         newPlayers.forEach(np => {
             np.lastPlayedCard = undefined
         })
+
+        let veryImportantCardsFilter = playVeryImportantCardsFilter(trumpSuit)
+
         this.game.setState({
             players: newPlayers,
-            lastTrickCards: lastTrickCards
+            lastTrickCards: lastTrickCards,
+            importantCardsFilter: playImportantCardsFilter,
+            veryImportantCardsFilter: veryImportantCardsFilter
         })
     }
 

@@ -26,20 +26,22 @@ export class SelectBid extends React.Component<SelectBidProps, SelectBidState> {
     }
 
     handlePass() {
-        this.handleBidValueChange('PASS')
-        this.handleBidSuitChange(null)
-        this.handlePlaceBid()
+        this.placeBid('PASS', null)
     }
 
     handlePlaceBid() {
+        this.placeBid(this.state.bidValue, this.state.bidSuit)
+    }
+
+    placeBid(bidValue: string, bidSuit: string | null) {
         fetch(
                 'http://localhost:8080/contree/game/' +  this.props.gameId + '/place-bid',
                 {
                     method: 'POST',
                     body: JSON.stringify({
                         playerName: this.props.playerName,
-                        bidValue: this.state.bidValue,
-                        cardSuit: this.state.bidSuit
+                        bidValue: bidValue,
+                        cardSuit: bidSuit
                     }),
                     headers: {
                         'Content-Type': 'application/json'
@@ -66,7 +68,7 @@ export class SelectBid extends React.Component<SelectBidProps, SelectBidState> {
 
     render() {
 
-        if (this.props.allowedBids.length == 0) {
+        if (this.props.allowedBids.length === 0) {
             return null;
         }
 
@@ -80,6 +82,8 @@ export class SelectBid extends React.Component<SelectBidProps, SelectBidState> {
         if (this.props.allowedBids.length > 0) {
             return (
                 <div id="select-bid-container">
+
+                    bid value : {this.state.bidValue} ; bid suit : {this.state.bidSuit}
 
                     <div id="select-bid" className='row'>
 
