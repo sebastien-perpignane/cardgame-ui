@@ -1,23 +1,20 @@
 import * as React from "react";
 import SockJS from "sockjs-client";
 import * as Stomp from "stompjs";
-import {PlayerModel} from "../players/Player";
 import {PlayerHand} from "../players/PlayerHand";
 import {BidModel} from "./ContreeBid";
-import {BidValue, GameManager} from "../../services/GameManager";
+import {BidValue, GameManager} from "../../services/game/GameManager";
 import 'bootstrap';
 import {Players} from "../players/Players";
-import { CardModel } from "../cards/Card";
 import { Trick } from "./Trick";
 import {SelectBid} from "./SelectBid";
+import { CardModel, HandCardModel } from "../../services/card/CardModels";
+import { PlayerModel } from "../../services/player/PlayerModels";
+import { GameModel } from "../../services/game/GameModels";
 
-interface GameModel {
-    gameId: string,
-    players: string[],
-    team1Score: number,
-    team2Score: number,
-    maxScore: number
-}
+import './Game.css';
+
+
 
 interface GameProps {
 
@@ -56,12 +53,9 @@ interface GameState {
     veryImportantCardsFilter?:(cm: CardModel) => boolean
 }
 
-export interface HandCardModel {
-    card: CardModel,
-    playable: boolean
-}
-
 export class Game extends React.Component<GameProps, GameState> {
+
+    API_URL = process.env.REACT_APP_API_URL_ROOT
 
     stompClient: Stomp.Client;
     gameManager: GameManager;
@@ -69,7 +63,10 @@ export class Game extends React.Component<GameProps, GameState> {
 
     constructor(props: GameProps) {
         super(props);
-        let socket = new SockJS('http://localhost:8080/stomp');
+
+        let stompUrl = this.API_URL + "/stomp"
+        //let socket = new SockJS('http://localhost:8080/stomp');
+        let socket = new SockJS(stompUrl);
         this.stompClient = Stomp.over(socket);
         this.gameManager = new GameManager(this, this.stompClient);
         //stompClient.debug = function(str) {};
@@ -105,13 +102,18 @@ export class Game extends React.Component<GameProps, GameState> {
     }
 
     async createGame() {
-        const response = await fetch("http://localhost:8080/contree/game/create", {method: 'POST', mode: "cors"})
+        
+        const response = await fetch(
+            this.API_URL + "/contree/game/create", 
+            {method: 'POST', mode: "cors"}
+            )
         return response.text();
     }
 
     async joinGame(gameId: string): Promise<GameModel> {
+
         return await fetch   (
-            'http://localhost:8080/contree/game/' + gameId + '/join',
+            this.API_URL + '/contree/game/' + gameId + '/join',
             {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},

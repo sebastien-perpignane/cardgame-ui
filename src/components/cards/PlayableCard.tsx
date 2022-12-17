@@ -1,5 +1,6 @@
-import Card, {CardModel, CardProps} from "./Card";
+import Card, {CardProps} from "./Card";
 import * as React from "react";
+import { CardModel } from "../../services/card/CardModels";
 
 interface PlayableCardProps extends CardProps {
     playable: boolean,
@@ -10,6 +11,9 @@ interface PlayableCardProps extends CardProps {
 
 export class PlayableCard extends React.Component<PlayableCardProps> {
     
+
+    API_URL = process.env.REACT_APP_API_URL_ROOT
+
     // TODO test if it is needed
     public static defaultProps = {
         importantCardsFilter: (cm: CardModel) => { return false },
@@ -34,7 +38,7 @@ export class PlayableCard extends React.Component<PlayableCardProps> {
     // TODO pass callback as prop, to avoid passing gameId
     playCard() {
         fetch(
-            'http://localhost:8080/contree/game/' + this.props.gameId + '/play-card',
+            this.API_URL + '/contree/game/' + this.props.gameId + '/play-card',
             {
                 method: 'POST',
                 body: JSON.stringify({
@@ -71,14 +75,6 @@ export class PlayableCard extends React.Component<PlayableCardProps> {
         if (veryImportantFilter(this.props.card)) {
             highlightStyle='very-important-card'
         }
-
-        /*if (this.props.card.rank === 'J' || this.props.card.rank === '9') {
-            highlightStyle='very-important-card'
-        }
-
-        if (this.props.card.rank === 'A') {
-            highlightStyle='important-card'
-        }*/
 
         return (
             <Card card={this.props.card} className={this.props.className + ' ' + playableStyle + ' ' + highlightStyle} clickHandler={ this.handlePlayCard } />

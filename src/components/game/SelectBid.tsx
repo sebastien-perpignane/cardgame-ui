@@ -1,5 +1,5 @@
 import React, {CSSProperties} from "react";
-import {BidValue} from "../../services/GameManager";
+import {BidValue} from "../../services/game/GameManager";
 import 'bootstrap';
 
 interface SelectBidProps {
@@ -13,8 +13,9 @@ interface SelectBidState {
     bidSuit: string | null
 }
 
-
 export class SelectBid extends React.Component<SelectBidProps, SelectBidState> {
+
+    API_URL = process.env.REACT_APP_API_URL_ROOT
 
     constructor(props: SelectBidProps) {
         super(props);
@@ -35,7 +36,7 @@ export class SelectBid extends React.Component<SelectBidProps, SelectBidState> {
 
     placeBid(bidValue: string, bidSuit: string | null) {
         fetch(
-                'http://localhost:8080/contree/game/' +  this.props.gameId + '/place-bid',
+                this.API_URL + '/contree/game/' +  this.props.gameId + '/place-bid',
                 {
                     method: 'POST',
                     body: JSON.stringify({

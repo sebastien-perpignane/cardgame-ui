@@ -1,6 +1,7 @@
 import React, { CSSProperties } from "react";
-import { CardSuit } from "../../services/GameManager";
-import Card, { CardModel } from "../cards/Card";
+import { CardModel } from "../../services/card/CardModels";
+import { CardSuit } from "../../services/game/GameManager";
+import Card from "../cards/Card";
 
 import './Trick.css';
 
@@ -16,10 +17,8 @@ export class Trick extends React.Component<TrickProps> {
 
         let trickCards = this.props.cards.map( (cm, i) => {
             let decal = (i * 30);
-
             let cardStyle: CSSProperties = {position: 'relative', right: decal + '%', transform: 'rotate(5deg)'}
-
-            return (<Card card={cm} className='pouet' cardStyle={cardStyle} />)
+            return (<Card card={cm} cardStyle={cardStyle} />)
         })
 
         return (

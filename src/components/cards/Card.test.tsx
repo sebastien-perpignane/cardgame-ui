@@ -1,8 +1,8 @@
-import { render, screen } from '@testing-library/react';
-import Card, {CardModel} from "./Card";
+import { fireEvent, render, screen } from '@testing-library/react';
+import { CardModel } from '../../services/card/CardModels';
+import Card from "./Card";
 
 test('renders card image', () => {
-
     const card: CardModel = {rank:"8", suit:"H", display:"8H", name:"EIGHT_HEART"};
 
     render(<Card card={card} className={'coucou'} clickHandler={() => {}} />);
@@ -10,16 +10,22 @@ test('renders card image', () => {
     expect(cardElement).toBeInTheDocument();
 });
 
-test('Wrapping div takes className given as prop', () => {
+test('Wrapping div can be clicked when clickHandler is passed', () => {
 
-    //const card: CardModel = {rank:"8", suit:"H", display:"8H", name:"EIGHT_HEART"};
+    const card: CardModel = {rank:"8", suit:"H", display:"8H", name:"EIGHT_HEART"};
 
-    //const testClassName = "coucou";
+    let spy = jest.fn()
 
-    //const result = render(<Card card={card} className={testClassName} clickHandler={() => {}} />);
-    //const wrappingDiv = result.container.querySelector('#AH')
-    // TODO mananage if wrappingDiv is null
-    /*expect(wrappingDiv.getAttribute('class').includes(testClassName));
-    expect(wrappingDiv).toBeInTheDocument();*/
+    const result = render(<Card card={card} clickHandler={spy} />);
+    const wrappingDiv = result.container.querySelector('#c8H')
+
+    if (wrappingDiv) {
+        fireEvent.click(wrappingDiv)
+        expect(wrappingDiv).toBeInTheDocument()
+        expect(spy).toBeCalled()
+    }
+    else {
+        fail('wrapping div should not be null')
+    }
 
 });

@@ -1,17 +1,13 @@
 import './Card.css';
 import * as React from "react";
+import { CardModel } from '../../services/card/CardModels';
 
 type size = 'normal' | 'small'
 
-export interface CardModel {
-    rank: string,
-    suit: string,
-    display: string,
-    name: string
-}
+
 
 export interface CardProps {
-    className: null | string,
+    className?: string,
     card: CardModel,
     cardSize?: size
     clickHandler?: () => void
@@ -24,10 +20,6 @@ class Card extends React.Component<CardProps> {
         cardStyle: {}
     };
 
-    constructor(props: CardProps) {
-        super(props)
-    }
-
     render() {
 
         let card = this.props.card;
@@ -39,11 +31,14 @@ class Card extends React.Component<CardProps> {
             cardSizeClass = 'ccard-small'
         }
 
+        let pClassName = this.props.className === undefined ? '' : this.props.className
+
         return (
-            <div className={this.props.className + ' ' + cardSizeClass}
-                id={this.props.card?.display}
-                onClick={this.props.clickHandler} style={this.props.cardStyle}>
-                <img alt="card" src={'images/' + cardImg + '.png'} 
+            <div className={pClassName + ' ' + cardSizeClass}
+                id={'c' + this.props.card?.display}
+                onClick={this.props.clickHandler}
+                style={this.props.cardStyle}>
+                <img alt="card" src={'images/' + cardImg + '.png'} onClick={this.props.clickHandler}
                 />
             </div>
         );

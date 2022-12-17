@@ -1,8 +1,7 @@
 
 import * as React from "react";
-import { CardModel } from "../cards/Card";
+import { CardModel, HandCardModel } from "../../services/card/CardModels";
 import { PlayableCard } from "../cards/PlayableCard";
-import { HandCardModel } from "../game/Game";
 
 type cardFilter = (cm: CardModel) => boolean;
 
@@ -29,7 +28,7 @@ export class PlayerHand extends React.Component<PlayerHandProps> {
                          />
         });
         return (
-            <div className="row">
+            <div id="player-hand" className="row">
                 {cardTags}
             </div>
         );

@@ -1,12 +1,10 @@
 import * as React from "react";
-import Card, { CardModel } from "../cards/Card";
+import { CardModel } from "../../services/card/CardModels";
+import Card from "../cards/Card";
 import { CardPlaceHolder } from "../cards/CardPlaceHolder";
 import { BidModel, ContreeBid } from "../game/ContreeBid";
 
-export interface PlayerModel {
-    name: string,
-    team?: string
-}
+
 
 interface PlayerProps {
     playerIndex: number,

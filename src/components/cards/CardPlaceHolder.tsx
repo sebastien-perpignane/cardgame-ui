@@ -1,6 +1,7 @@
 
 import * as React from 'react';
-import Card, {CardModel} from "./Card";
+import { CardModel } from '../../services/card/CardModels';
+import Card from './Card';
 
 export class CardPlaceHolder extends React.Component {
 

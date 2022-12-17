@@ -1,6 +1,6 @@
 import {render, fireEvent, screen} from '@testing-library/react';
+import { CardModel } from '../../services/card/CardModels';
 import {PlayableCard} from "./PlayableCard";
-import {CardModel} from "./Card";
 //import {PlayableCard} from "./PlayableCard";
 
 test('Clickable', () => {
@@ -8,10 +8,10 @@ test('Clickable', () => {
     const spy = jest.fn();
 
     const card: CardModel = {rank:"8", suit:"H", display:"8H", name:"EIGHT_HEART"}
-    render(<PlayableCard gameId={'moncul'} card={card} className={"coucou"} clickHandler={spy} playable={true} />)
+    render(<PlayableCard gameId={'game-id'} card={card} clickHandler={spy} playable={true} />)
 
-    fireEvent.click(screen.getByAltText(/card/i));
-
-    expect(spy).toHaveBeenCalled();
+    let img = screen.getByRole('img')
+    expect(img).toBeInTheDocument()
+    expect(img.onclick).toBeDefined()
 
 });

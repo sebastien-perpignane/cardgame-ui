@@ -1,8 +1,8 @@
 //import {Game, HandCardModel, PlayerState} from 
 import * as Stomp from "stompjs";
-import {PlayerModel} from "../components/players/Player";
-import { Game, HandCardModel, PlayerState } from "../components/game/Game";
-import { CardModel } from "../components/cards/Card";
+import { Game, PlayerState } from "../../components/game/Game";
+import { CardModel, HandCardModel } from "../card/CardModels";
+import { PlayerModel } from "../player/PlayerModels";
 
 
 export interface BidValue {
@@ -81,8 +81,8 @@ export class GameManager {
     }
 
     async dispatchMessage(message: Stomp.Message) {
-        let event = JSON.parse(message.body);
-        let eventData = event.eventData;
+        let event = JSON.parse(message.body)
+        let eventData = event.eventData
 
         if ((typeof eventData === 'string' || eventData instanceof String) && event.type !== 'TRICK_STARTED') {
             console.log('string event data ' + eventData)
@@ -91,21 +91,20 @@ export class GameManager {
             switch(event.type) {
                 case 'PLAY_TURN':
                     let playTurnEventData = event.eventData as PlayTurnEventData
-                    this.managePlayTurn(playTurnEventData);
+                    this.managePlayTurn(playTurnEventData)
                     break
                 case 'BID_TURN':
-                    //manageBidTurn(event)
                     let bidTurnData = event.eventData as BidTurnEventData
-                    this.manageBidTurn(bidTurnData);
+                    this.manageBidTurn(bidTurnData)
                     break
                 case 'PLACED_BID':
                     let placedBidData = event.eventData as PlacedBidEventData
-                    this.managePlacedBid(placedBidData);
-                    break;
+                    this.managePlacedBid(placedBidData)
+                    break
                 case 'DEAL_OVER':
                     let dealOverData = event.eventData as EndOfDealEventData
                     this.manageEndOfDeal(dealOverData)
-                    break;
+                    break
                 case 'CARD_PLAYED':
                     let playedCardData = event.eventData as PlayedCardEventData
                     this.managePlayedCard(playedCardData)
@@ -117,10 +116,8 @@ export class GameManager {
                 default:
                     let eventDataAsStr = JSON.stringify(eventData);
                     console.log('default event type ' + eventDataAsStr)
-                    //displayPlayerMessage(eventDataAsStr);
             }
         }
-        return;
     }
 
     async subscribeToGame(gameId: string) {
