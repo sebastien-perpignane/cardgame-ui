@@ -38,8 +38,7 @@ class Card extends React.Component<CardProps> {
                 id={'c' + this.props.card?.display}
                 onClick={this.props.clickHandler}
                 style={this.props.cardStyle}>
-                <img alt="card" src={'images/' + cardImg + '.png'} onClick={this.props.clickHandler}
-                />
+                <img alt="card" src={'images/' + cardImg + '.png'} />
             </div>
         );
     }

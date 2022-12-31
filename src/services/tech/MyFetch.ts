@@ -11,6 +11,7 @@ export class MyFetch {
                 method: 'POST',
                 mode: "cors",
                 headers: {'Content-Type': 'application/json'},
+                credentials: "include",
                 body: JSON.stringify(data)
             }
         )
@@ -24,7 +25,8 @@ export class MyFetch {
             {
                 method: 'GET',
                 mode: 'cors',
-                headers: {'Content-Type': 'application/json'}
+                headers: {'Content-Type': 'application/json'},
+                credentials: "include"
             }
         )
         return response.json() as T

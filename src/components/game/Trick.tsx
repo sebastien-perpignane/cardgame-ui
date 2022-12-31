@@ -7,7 +7,7 @@ import './Trick.css';
 
 interface TrickProps {
     cards: CardModel[],
-    trump: CardSuit
+    trumpSuit: CardSuit
 }
 
 export class Trick extends React.Component<TrickProps> {
@@ -18,7 +18,7 @@ export class Trick extends React.Component<TrickProps> {
         let trickCards = this.props.cards.map( (cm, i) => {
             let decal = (i * 30);
             let cardStyle: CSSProperties = {position: 'relative', right: decal + '%', transform: 'rotate(5deg)'}
-            return (<Card card={cm} cardStyle={cardStyle} />)
+            return (<Card card={cm} cardStyle={cardStyle} key={cm.name} />)
         })
 
         return (

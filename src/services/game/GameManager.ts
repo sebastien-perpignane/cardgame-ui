@@ -1,9 +1,23 @@
 //import {Game, HandCardModel, PlayerState} from 
 import * as Stomp from "stompjs";
-import { Game, PlayerState } from "../../components/game/Game";
+import { CurrentDealState, Game, PlayerState } from "../../components/game/Game";
 import { CardModel, HandCardModel } from "../card/CardModels";
 import { PlayerModel } from "../player/PlayerModels";
 
+interface DealStartedData {
+    dealNumber: number,
+    dealId: string
+}
+
+interface TrickOverEventData {
+    trickId: string,
+    winner: string
+}
+
+interface JoinedGameEventData {
+    playerIndex: number,
+    playerName: string
+}
 
 export interface BidValue {
     expectedScore?: number,
@@ -62,6 +76,11 @@ interface PlayedCardEventData {
     card: CardModel
 }
 
+interface PlayStepStartedData {
+    dealId: string,
+    trumpSuit: CardSuit
+}
+
 const bidImportantCardsFilter = (cm: CardModel) => { return cm.rank === 'A' }
 const bidVeryImportantCardsFilter = (cm: CardModel) => { return cm.rank === 'J' || cm.rank === '9' }
 
@@ -84,22 +103,35 @@ export class GameManager {
         let event = JSON.parse(message.body)
         let eventData = event.eventData
 
-        if ((typeof eventData === 'string' || eventData instanceof String) && event.type !== 'TRICK_STARTED') {
+        if ((typeof eventData === 'string' || eventData instanceof String) && event.type !== 'TRICK_STARTED' && event.type !== 'GAME_OVER') {
             console.log('string event data ' + eventData)
         }
         else {
             switch(event.type) {
-                case 'PLAY_TURN':
-                    let playTurnEventData = event.eventData as PlayTurnEventData
-                    this.managePlayTurn(playTurnEventData)
+                case 'DEAL_STARTED':
+                    let dealStartedData = event.eventData as DealStartedData
+                    this.manageDealStarted(dealStartedData)
+                    break
+                case 'PLACED_BID':
+                    let placedBidData = event.eventData as PlacedBidEventData
+                    this.managePlacedBid(placedBidData)
                     break
                 case 'BID_TURN':
                     let bidTurnData = event.eventData as BidTurnEventData
                     this.manageBidTurn(bidTurnData)
                     break
-                case 'PLACED_BID':
-                    let placedBidData = event.eventData as PlacedBidEventData
-                    this.managePlacedBid(placedBidData)
+
+                case 'PLAY_STEP_STARTED':
+                    let playStepStartedData = event.eventData as PlayStepStartedData
+                    this.managePlayStepStart(playStepStartedData)
+                    break
+                case 'PLAY_TURN':
+                    let playTurnEventData = event.eventData as PlayTurnEventData
+                    this.managePlayTurn(playTurnEventData)
+                    break
+                case 'TRICK_STARTED':
+                    let trickStartedData = event.eventData as TrickStartedEventData
+                    this.manageTrickStarted(trickStartedData.trumpSuit.name)
                     break
                 case 'DEAL_OVER':
                     let dealOverData = event.eventData as EndOfDealEventData
@@ -109,20 +141,61 @@ export class GameManager {
                     let playedCardData = event.eventData as PlayedCardEventData
                     this.managePlayedCard(playedCardData)
                     break
-                case 'TRICK_STARTED':
-                    let trickStartedData = event.eventData as TrickStartedEventData
-                    this.manageTrickStarted(trickStartedData.trumpSuit.name)
+                
+                case 'GAME_OVER':
+                    this.manageEndOfGame();
                     break
+                case 'TRICK_OVER':
+                    let trickOverData = event.eventData as TrickOverEventData
+                    this.manageTrickOver(trickOverData)
+                    break
+
+                case 'JOINED_GAME':
+                    let joinedGameData = event.eventData as JoinedGameEventData
+                    this.manageJoinedGamed(joinedGameData)
+                    break;
+
                 default:
                     let eventDataAsStr = JSON.stringify(eventData);
                     console.log('default event type ' + eventDataAsStr)
             }
         }
+        return;
     }
 
-    async subscribeToGame(gameId: string) {
+    manageJoinedGamed(joinedGameData: JoinedGameEventData) {
+
+        let newPlayers = Array.from(this.game.state.players)
+
+        newPlayers[joinedGameData.playerIndex].player.name = joinedGameData.playerName
+
+        this.game.setState({
+            players: newPlayers
+        })
+    }
+
+    managePlayStepStart(playStepStartedData: PlayStepStartedData) {
+        let dealState = this.game.state.currentDealState
+        if (!dealState) {
+            // TODO Study error management in JS
+            throw new Error('ça doit pas arriver')
+        }
+        let newDealState = Object.assign(dealState, {trumpSuit: playStepStartedData.trumpSuit})
+        this.game.setState({
+            currentDealState: newDealState
+        })
+    }
+
+    manageEndOfGame() {
+        console.debug('Game is over')
+        setTimeout(() => {this.game.restart()}, 2000)
+        return
+    }
+
+    subscribeToGame(gameId: string) {
         //let localClient = this.stompClient;
         this.stompClient.subscribe('/topic/game/' + gameId, this.dispatchMessage)
+        this.stompClient.subscribe('/user/topic/game/' + gameId, this.dispatchMessage)
     }
 
     manageBidTurn(bidTurnEventData: BidTurnEventData) {
@@ -182,7 +255,9 @@ export class GameManager {
     manageEndOfDeal(endOfDealEventData: EndOfDealEventData) {
         this.game.setState({
             team1Score: this.game.state.team1Score + endOfDealEventData.team1Score,
-            team2Score: this.game.state.team2Score + endOfDealEventData.team2Score
+            team2Score: this.game.state.team2Score + endOfDealEventData.team2Score,
+            currentDealState: undefined
+
         })
         // FIXME 
         this.manageTrickStarted("fuck")
@@ -212,9 +287,14 @@ export class GameManager {
             }
         })
 
-
         let newPlayers: PlayerState[] = [...this.game.state.players]
+
+
+
         newPlayers.forEach(np => {
+            if (np.lastPlayedCard !== undefined) {
+                lastTrickCards.push(np.lastPlayedCard)
+            }
             np.lastPlayedCard = undefined
         })
 
@@ -222,13 +302,54 @@ export class GameManager {
 
         this.game.setState({
             players: newPlayers,
-            lastTrickCards: lastTrickCards,
             importantCardsFilter: playImportantCardsFilter,
             veryImportantCardsFilter: veryImportantCardsFilter
         })
     }
 
-    async sleep() {
-        await setTimeout(() => {}, 10000)
+    manageTrickOver(trickOverData: TrickOverEventData) {
+
+        let lastTrickCards: CardModel[] = []
+        this.game.state.players.forEach(p => {
+            if (p.lastPlayedCard !== undefined) {
+                lastTrickCards.push(p.lastPlayedCard)
+            }
+        })
+
+        let lastTrickWinner = trickOverData.winner
+
+        this.game.setState({
+            lastTrickCards: lastTrickCards,
+            lastTrickWinner: lastTrickWinner
+        })
+
     }
+
+    private manageShit() {
+        let currentDealState = this.game.state.currentDealState
+
+        if (currentDealState === undefined) {
+            throw Error("sapuduku")
+        }
+
+        let stateChanges = {dealId: 'coucou'}
+
+        let newState: CurrentDealState = Object.assign(currentDealState, stateChanges)
+
+        this.game.setState({
+            currentDealState: newState
+        })
+    }
+
+    private manageDealStarted(dealStartedData: DealStartedData) {
+
+        this.game.setState({
+            currentDealState:  {
+                dealId:dealStartedData.dealId,
+                dealNumber: dealStartedData.dealNumber
+            }
+        })
+
+    }
+
 }

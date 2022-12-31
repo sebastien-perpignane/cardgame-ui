@@ -3,7 +3,7 @@ import SockJS from "sockjs-client";
 import * as Stomp from "stompjs";
 import {PlayerHand} from "../players/PlayerHand";
 import {BidModel} from "./ContreeBid";
-import {BidValue, GameManager} from "../../services/game/GameManager";
+import {BidValue, CardSuit, GameManager} from "../../services/game/GameManager";
 import 'bootstrap';
 import {Players} from "../players/Players";
 import { Trick } from "./Trick";
@@ -13,8 +13,13 @@ import { PlayerModel } from "../../services/player/PlayerModels";
 import { GameModel } from "../../services/game/GameModels";
 
 import './Game.css';
+import { MyFetch } from "../../services/tech/MyFetch";
+import { CurrentDealInfo } from "./CurrentDealInfo";
 
-
+interface JoinGameResponse {
+    playerId: string,
+    gameState: GameModel
+}
 
 interface GameProps {
 
@@ -24,6 +29,10 @@ enum PlayerStatus {
     BIDING,
     PLAYING,
     WAITING
+}
+
+interface CreateGameResponse {
+    gameId: string
 }
 
 export interface PlayerState {
@@ -38,6 +47,23 @@ interface LocalPlayerState extends PlayerState {
     allowedBidValues: BidValue[]
 }
 
+export interface CurrentDealState {
+    dealId: string,
+    dealNumber: number,
+    step?: string,
+    trumpSuit?: CardSuit
+}
+
+interface PlayedCard {
+    player: PlayerModel,
+    card: CardModel
+}
+
+interface CurrentTrickState {
+    trickId: string,
+    playedCards: PlayedCard[]
+}
+
 interface GameState {
     gameId: string | null,
     players: PlayerState[],
@@ -47,11 +73,30 @@ interface GameState {
     localPlayerName: string,
     localPlayerHand: HandCardModel[],
     localPlayerState: PlayerState | null,
+
+    currentDealState?: CurrentDealState,
+    currentTrickSate?: CurrentTrickState,
+
     allowedBids: BidValue[],
     lastTrickCards: CardModel[],
     importantCardsFilter?: (cm: CardModel) => boolean,
-    veryImportantCardsFilter?:(cm: CardModel) => boolean
+    veryImportantCardsFilter?:(cm: CardModel) => boolean,
+    lastTrickWinner?: string
 }
+
+const newGameState = {
+    gameId: null,
+    players: [],
+    localPlayerHand: [],
+    localPlayerState: null,
+    allowedBids: [],
+    team1Score: 0,
+    team2Score: 0,
+    maxScore: 1000,
+    lastTrickCards: []
+}
+
+const initGameState = Object.assign({localPlayerName: ''}, newGameState)
 
 export class Game extends React.Component<GameProps, GameState> {
 
@@ -59,35 +104,25 @@ export class Game extends React.Component<GameProps, GameState> {
 
     stompClient: Stomp.Client;
     gameManager: GameManager;
+    myFetch: MyFetch
 
 
     constructor(props: GameProps) {
-        super(props);
+        super(props)
+
+        this.myFetch = new MyFetch()
 
         let stompUrl = this.API_URL + "/stomp"
-        //let socket = new SockJS('http://localhost:8080/stomp');
-        let socket = new SockJS(stompUrl);
-        this.stompClient = Stomp.over(socket);
-        this.gameManager = new GameManager(this, this.stompClient);
+        let socket = new SockJS(stompUrl)
+        this.stompClient = Stomp.over(socket)
+        this.gameManager = new GameManager(this, this.stompClient)
         //stompClient.debug = function(str) {};
-        this.stompClient.connect({}, function (frame) {
-            //this.stompClient.setConnected(true);
-            console.log('Connected: ' + frame);
+        this.stompClient.connect({}, (frame) => {
+            console.log('Connected: ' + frame)
         });
-        this.state = {
-            gameId: null,
-            players: [],
-            localPlayerName: '',
-            localPlayerHand: [],
-            localPlayerState: null,
-            allowedBids: [],
-            team1Score: 0,
-            team2Score: 0,
-            maxScore: 1000,
-            lastTrickCards: []
-        };
-        this.startNewGame = this.startNewGame.bind(this);
-        this.handlePlayerNameChange = this.handlePlayerNameChange.bind(this);
+        this.state = initGameState;
+        this.startNewGame = this.startNewGame.bind(this)
+        this.handlePlayerNameChange = this.handlePlayerNameChange.bind(this)
     }
 
     setLocalPlayerHand(hand: HandCardModel[]) {
@@ -101,30 +136,26 @@ export class Game extends React.Component<GameProps, GameState> {
         
     }
 
-    async createGame() {
-        
-        const response = await fetch(
-            this.API_URL + "/contree/game/create", 
-            {method: 'POST', mode: "cors"}
-            )
-        return response.text();
+    restart() {
+        this.setState(newGameState)
     }
 
-    async joinGame(gameId: string): Promise<GameModel> {
-
-        return await fetch   (
-            this.API_URL + '/contree/game/' + gameId + '/join',
-            {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({playerName : this.state.localPlayerName})
-            }
-        ).then((response) => {
-            return response.json() as Promise<GameModel>
+    async createGame(): Promise<CreateGameResponse> {
+        
+        return await fetch(
+            this.API_URL + "/contree/game/create", 
+            {method: 'POST', mode: "cors", credentials: "include"}
+        ).then(response => {
+            return response.json()
+        }).then(data => {
+            return data as CreateGameResponse
         })
-            .then ((data) => {
-                return data
-            });
+    }
+
+    async joinGame(gameId: string): Promise<JoinGameResponse> {
+
+        let gameJoinUri = '/contree/game/' + gameId + '/join'
+        return await this.myFetch.post(gameJoinUri, {playerName: this.state.localPlayerName})
     }
 
     async startNewGame() {
@@ -137,12 +168,15 @@ export class Game extends React.Component<GameProps, GameState> {
             return;
         }
 
-        let gameId = await this.createGame();
+        let gameId = (await this.createGame()).gameId;
+        
         //this.setState({gameId: gameId})
-        await this.gameManager.subscribeToGame(gameId);
-        let gameModel = await this.joinGame(gameId);
+        this.gameManager.subscribeToGame(gameId);
+        let joinResponse = await this.joinGame(gameId);
+        let gameModel = joinResponse.gameState
+        this.stompClient.send('/app/hello', {}, JSON.stringify({message: 'Lis tous mes IDs de session gros !', playerId: joinResponse.playerId}))
 
-        let playerStates: PlayerState[] = gameModel.players.map((playerName) => {
+        let playerStates: PlayerState[] = joinResponse.gameState.players.map((playerName) => {
             return {
                 player: {name: playerName},
                 playerStatus: PlayerStatus.WAITING
@@ -150,6 +184,8 @@ export class Game extends React.Component<GameProps, GameState> {
         });
 
         console.log('playerStates on start game : ' + playerStates)
+
+        
 
         this.setState({
             gameId: gameModel.gameId,
@@ -175,7 +211,6 @@ export class Game extends React.Component<GameProps, GameState> {
         return (
             <div id='game'>
 
-
                     {(this.state.gameId === null) &&
                     <div id='start-game-form'>
                         <label htmlFor='playerName'>Player name :</label>
@@ -194,8 +229,11 @@ export class Game extends React.Component<GameProps, GameState> {
                             <Players players={this.state.players} />
                             </div>
 
+                            
+
                             <div id='last-trick' className="col-md-4">
-                                <Trick cards={this.state.lastTrickCards} trump={{display:'', name:'HEARTS'}} />
+                                {this.state.currentDealState && <CurrentDealInfo {...this.state.currentDealState} />}
+                                <Trick cards={this.state.lastTrickCards} trumpSuit={{display:'', name:'HEARTS'}} />
                             </div>
 
                             <div id='game-score' className={'col-md-4'}>

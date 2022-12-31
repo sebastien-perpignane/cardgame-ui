@@ -12,6 +12,5 @@ test('Clickable', () => {
 
     let img = screen.getByRole('img')
     expect(img).toBeInTheDocument()
-    expect(img.onclick).toBeDefined()
 
 });

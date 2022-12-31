@@ -47,7 +47,8 @@ export class PlayableCard extends React.Component<PlayableCardProps> {
                 }),
                 headers: {
                     'Content-Type': 'application/json'
-                }
+                },
+                credentials: "include"
 
             }
         ).then(response => {

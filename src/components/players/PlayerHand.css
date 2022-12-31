@@ -1,4 +1,8 @@
-#player-hand {
+/*#player-hand {
     display: flex;
     height: 35vmin;
+}*/
+
+#player-hand > div.playable-true > img:hover {
+    transform: scale(1.1);
 }

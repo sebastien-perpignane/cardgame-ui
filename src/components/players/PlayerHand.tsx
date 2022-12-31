@@ -2,6 +2,7 @@
 import * as React from "react";
 import { CardModel, HandCardModel } from "../../services/card/CardModels";
 import { PlayableCard } from "../cards/PlayableCard";
+import './PlayerHand.css'
 
 type cardFilter = (cm: CardModel) => boolean;
 

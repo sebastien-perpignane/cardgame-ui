@@ -2,6 +2,8 @@ import React, {CSSProperties} from "react";
 import {BidValue} from "../../services/game/GameManager";
 import 'bootstrap';
 
+const initialState = {bidValue: 'EIGHTY', bidSuit: 'DIAMONDS'}
+
 interface SelectBidProps {
     gameId: string,
     playerName: string,
@@ -10,7 +12,7 @@ interface SelectBidProps {
 
 interface SelectBidState {
     bidValue: string,
-    bidSuit: string | null
+    bidSuit: string | undefined
 }
 
 export class SelectBid extends React.Component<SelectBidProps, SelectBidState> {
@@ -20,10 +22,7 @@ export class SelectBid extends React.Component<SelectBidProps, SelectBidState> {
     constructor(props: SelectBidProps) {
         super(props);
         this.handlePlaceBid = this.handlePlaceBid.bind(this)
-        this.state = {
-            bidValue: 'PASS',
-            bidSuit: 'DIAMONDS'
-        }
+        this.state = initialState
     }
 
     handlePass() {
@@ -31,7 +30,7 @@ export class SelectBid extends React.Component<SelectBidProps, SelectBidState> {
     }
 
     handlePlaceBid() {
-        this.placeBid(this.state.bidValue, this.state.bidSuit)
+        this.placeBid(this.state.bidValue, this.state.bidSuit === undefined ? null : this.state.bidSuit)
     }
 
     placeBid(bidValue: string, bidSuit: string | null) {
@@ -42,11 +41,12 @@ export class SelectBid extends React.Component<SelectBidProps, SelectBidState> {
                     body: JSON.stringify({
                         playerName: this.props.playerName,
                         bidValue: bidValue,
-                        cardSuit: bidSuit
+                        cardSuit: bidSuit === undefined ? null : bidSuit
                     }),
                     headers: {
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    credentials: "include"
                 }
                 ).then(response => {
                     if (response.status / 100 !== 2) {
@@ -61,7 +61,7 @@ export class SelectBid extends React.Component<SelectBidProps, SelectBidState> {
         })
     }
 
-    handleBidSuitChange(bidSuit: string | null) {
+    handleBidSuitChange(bidSuit: string | undefined) {
         this.setState({
             bidSuit: bidSuit
         })
@@ -90,18 +90,23 @@ export class SelectBid extends React.Component<SelectBidProps, SelectBidState> {
 
                         <div className='col-md-1'>
                             <label htmlFor="place-pass-bid">Pass</label>
-                            <button id='place-pass-bid' onClick={ () => this.handlePass() } style={{width: '100%'}} className='btn btn-outline-primary'>Pass</button>
+                            <button id='place-pass-bid' 
+                                onClick={ () => this.handlePass() } 
+                                style={{width: '100%'}} 
+                                className='btn btn-outline-primary'>
+                                Pass
+                            </button>
                         </div>
 
                         <div className="form-group col-md-6">
                             <label htmlFor="bid-value">Bid value</label>
-                            <select name={'bid-value'} className="form-control" style={bidValueStyle} onChange={ (e) => this.handleBidValueChange(e.target.value) }>
+                            <select name={'bid-value'} className="form-control" value={this.state.bidValue} style={bidValueStyle} onChange={ (e) => this.handleBidValueChange(e.target.value) }>
                                 {options}
                             </select>
                         </div>
                         <div className="form-group col-md-5">
                             <label htmlFor="bid-suit">Bid suit</label>
-                            <select id="bid-suit" className="form-control" style={bidSuitStyle} onChange={(e) => this.handleBidSuitChange(e.target.value)}>
+                            <select id="bid-suit" className="form-control" value={this.state.bidSuit} style={bidSuitStyle} onChange={(e) => this.handleBidSuitChange(e.target.value)}>
                                 <option value="DIAMONDS">♦</option>
                                 <option value="HEARTS">♥</option>
                                 <option value="SPADES">♠</option>
@@ -132,10 +137,7 @@ export class SelectBid extends React.Component<SelectBidProps, SelectBidState> {
     componentDidUpdate(prevProps: Readonly<SelectBidProps>, prevState: Readonly<SelectBidState>, snapshot?: any) {
         // FIXME ugly solution to reinit state
         if (this.props.allowedBids.length !== prevProps.allowedBids.length ) {
-            this.setState({
-                bidValue: 'EIGHTY',
-                bidSuit: 'DIAMONDS'
-            });
+            this.setState(initialState);
         }
     }
 }
