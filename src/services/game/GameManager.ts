@@ -165,6 +165,11 @@ export class GameManager {
 
     manageJoinedGamed(joinedGameData: JoinedGameEventData) {
 
+        if (!this.game.state.gameId) {
+            console.warn("joined game event ignored as game is not started. To be managed")
+            return;
+        }
+
         let newPlayers = Array.from(this.game.state.players)
 
         newPlayers[joinedGameData.playerIndex].player.name = joinedGameData.playerName
@@ -192,10 +197,11 @@ export class GameManager {
         return
     }
 
-    subscribeToGame(gameId: string) {
+    subscribeToGame(gameId: string, playerId: string) {
         //let localClient = this.stompClient;
-        this.stompClient.subscribe('/topic/game/' + gameId, this.dispatchMessage)
-        this.stompClient.subscribe('/user/topic/game/' + gameId, this.dispatchMessage)
+        this.stompClient.subscribe('/app/topic/game/' + gameId, this.dispatchMessage, {playerId: playerId})
+        this.stompClient.subscribe('/topic/game/' + gameId, this.dispatchMessage, {playerId: playerId})
+        this.stompClient.subscribe('/user/topic/game/' + gameId, this.dispatchMessage, {playerId: playerId})
     }
 
     manageBidTurn(bidTurnEventData: BidTurnEventData) {

@@ -9,7 +9,7 @@ import {Players} from "../players/Players";
 import { Trick } from "./Trick";
 import {SelectBid} from "./SelectBid";
 import { CardModel, HandCardModel } from "../../services/card/CardModels";
-import { PlayerModel } from "../../services/player/PlayerModels";
+import { FullPlayerModel, PlayerModel } from "../../services/player/PlayerModels";
 import { GameModel } from "../../services/game/GameModels";
 
 import './Game.css';
@@ -18,6 +18,11 @@ import { CurrentDealInfo } from "./CurrentDealInfo";
 
 interface JoinGameResponse {
     playerId: string,
+    gameState: GameModel,
+    playerModel: FullPlayerModel
+}
+
+interface StartGameResponse {
     gameState: GameModel
 }
 
@@ -32,7 +37,8 @@ enum PlayerStatus {
 }
 
 interface CreateGameResponse {
-    gameId: string
+    gameId: string,
+    playerId: string
 }
 
 export interface PlayerState {
@@ -65,6 +71,10 @@ interface CurrentTrickState {
 }
 
 interface GameState {
+
+    selectedGameId?: string,
+    selectableGameIds: string[]
+
     gameId: string | null,
     players: PlayerState[],
     team1Score: number,
@@ -93,7 +103,8 @@ const newGameState = {
     team1Score: 0,
     team2Score: 0,
     maxScore: 1000,
-    lastTrickCards: []
+    lastTrickCards: [],
+    selectableGameIds: []
 }
 
 const initGameState = Object.assign({localPlayerName: ''}, newGameState)
@@ -123,6 +134,7 @@ export class Game extends React.Component<GameProps, GameState> {
         this.state = initGameState;
         this.startNewGame = this.startNewGame.bind(this)
         this.handlePlayerNameChange = this.handlePlayerNameChange.bind(this)
+        this.updateStateWithGameModel = this.updateStateWithGameModel.bind(this)
     }
 
     setLocalPlayerHand(hand: HandCardModel[]) {
@@ -132,19 +144,35 @@ export class Game extends React.Component<GameProps, GameState> {
     }
 
     componentDidMount() {
-
         
+        this.myFetch.get<string[]>('/contree/game/list').then(
+            (gameIds) => {
+                this.setState({
+                    selectableGameIds: gameIds
+                })
+
+                if (gameIds.length > 0) {
+                    this.setState({
+                        selectedGameId: gameIds[0]
+                    })
+                }
+
+            }
+
+            
+        );
+
     }
 
     restart() {
         this.setState(newGameState)
     }
 
-    async createGame(): Promise<CreateGameResponse> {
+    async createGame(playerName: string): Promise<CreateGameResponse> {
         
         return await fetch(
             this.API_URL + "/contree/game/create", 
-            {method: 'POST', mode: "cors", credentials: "include"}
+            {method: 'POST', mode: "cors", credentials: "include", headers: {'Content-Type': 'application/json'}, body: JSON.stringify({playerName: playerName})}
         ).then(response => {
             return response.json()
         }).then(data => {
@@ -158,6 +186,38 @@ export class Game extends React.Component<GameProps, GameState> {
         return await this.myFetch.post(gameJoinUri, {playerName: this.state.localPlayerName})
     }
 
+    async startGame(gameId: string): Promise<StartGameResponse> {
+
+        let gameJoinUri = '/contree/game/' + gameId + '/start'
+        return await this.myFetch.post<StartGameResponse>(gameJoinUri, {})
+    }
+
+    joinSpecificGame = (e: any) => {
+
+        
+
+        if (!this.state.selectedGameId) {
+            alert("no game selected")
+            return
+        }
+
+        let gameId = this.state.selectedGameId
+
+        this.joinGame(this.state.selectedGameId).then(
+            
+            joinResponse => {
+
+                this.gameManager.subscribeToGame(gameId, joinResponse.playerId);
+
+                this.updateStateWithGameModel(joinResponse.gameState)
+                this.setState({
+                    localPlayerHand: joinResponse.playerModel.hand.map(cm => {return {card: cm, playable: false}})
+                })
+            }
+        )
+        
+    }
+
     async startNewGame() {
 
         console.log("Player name when starting new game: " + this.state.localPlayerName)
@@ -168,15 +228,22 @@ export class Game extends React.Component<GameProps, GameState> {
             return;
         }
 
-        let gameId = (await this.createGame()).gameId;
+        let createGameResponse = await this.createGame(this.state.localPlayerName)
+
+        let gameId = createGameResponse.gameId;
+        let playerId = createGameResponse.playerId
+
+        //this.stompClient.send('/app/hello/' + gameId, {}, JSON.stringify({message: 'Subscribe me to the game', playerId: playerId}))
         
         //this.setState({gameId: gameId})
-        this.gameManager.subscribeToGame(gameId);
-        let joinResponse = await this.joinGame(gameId);
-        let gameModel = joinResponse.gameState
-        this.stompClient.send('/app/hello', {}, JSON.stringify({message: 'Lis tous mes IDs de session gros !', playerId: joinResponse.playerId}))
+        this.gameManager.subscribeToGame(gameId, playerId);
+        let startGameResponse = await this.startGame(gameId);
+        let gameModel = startGameResponse.gameState
 
-        let playerStates: PlayerState[] = joinResponse.gameState.players.map((playerName) => {
+        this.updateStateWithGameModel(gameModel)
+        
+        /*
+        let playerStates: PlayerState[] = gameModel.players.map((playerName) => {
             return {
                 player: {name: playerName},
                 playerStatus: PlayerStatus.WAITING
@@ -198,6 +265,30 @@ export class Game extends React.Component<GameProps, GameState> {
                 playerStatus: PlayerStatus.WAITING
             }
         });
+        */
+    }
+
+    private updateStateWithGameModel(gameModel: GameModel) {
+
+        let playerStates: PlayerState[] = gameModel.players.map((playerName) => {
+            return {
+                player: {name: playerName},
+                playerStatus: PlayerStatus.WAITING
+            };
+        });
+
+        this.setState({
+            gameId: gameModel.gameId,
+            players: playerStates,
+            team1Score: gameModel.team1Score,
+            team2Score: gameModel.team2Score,
+            maxScore: gameModel.maxScore,
+            localPlayerState: {
+                player: {name: this.state.localPlayerName},
+                playerStatus: PlayerStatus.WAITING
+            }
+        });
+
     }
 
     handlePlayerNameChange(e: any) {
@@ -206,16 +297,36 @@ export class Game extends React.Component<GameProps, GameState> {
         })
     }
 
+    handleGameIdSelection = (e: any) => {
+        this.setState( {
+            selectedGameId: e.target.value
+        })
+    }
+
     render() {
 
+        let selectGameOptions = this.state.selectableGameIds.map(gameId => <option value={gameId} key={gameId}>{gameId}</option>)
+
         return (
+
             <div id='game'>
 
                     {(this.state.gameId === null) &&
-                    <div id='start-game-form'>
-                        <label htmlFor='playerName'>Player name :</label>
-                        <input type="text" id="playerName" value={this.state.localPlayerName} onChange={this.handlePlayerNameChange} />
-                        <button onClick={this.startNewGame} className='btn btn-outline-primary'>Start new game</button>
+                    <div>
+                        <div id='start-game-form'>
+                            <label htmlFor='playerName'>Player name :</label>
+                            <input type="text" id="playerName" value={this.state.localPlayerName} onChange={this.handlePlayerNameChange} />
+
+                            
+
+                            <button onClick={this.startNewGame} className='btn btn-outline-primary'>Start new game</button>
+                        </div>
+                        <div id="join-game-form">
+                            <select id="select-game-id" value="{this.state.selectGameId}" onChange={this.handleGameIdSelection}>
+                                {selectGameOptions}
+                            </select>
+                            <button onClick={this.joinSpecificGame} className='btn btn-outline-primary'>Join game</button>
+                        </div>
                     </div>
                     }
 

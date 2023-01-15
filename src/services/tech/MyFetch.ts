@@ -19,7 +19,7 @@ export class MyFetch {
 
     }
 
-    async get<T>(path: string, data: Object): Promise<T> {
+    async get<T>(path: string): Promise<T> {
         const response = await fetch(
             this.API_URL + path,
             {
