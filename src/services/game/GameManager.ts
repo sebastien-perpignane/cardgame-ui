@@ -155,6 +155,12 @@ export class GameManager {
                     this.manageJoinedGamed(joinedGameData)
                     break;
 
+                case 'HAND_RECEIVED':
+                    console.log("Received hand")
+                    let receivedHandDataStr = JSON.stringify(eventData);
+                    console.table(event.eventData)
+                    break
+
                 default:
                     let eventDataAsStr = JSON.stringify(eventData);
                     console.log('default event type ' + eventDataAsStr)
