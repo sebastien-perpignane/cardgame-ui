@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+
+<style type="text/css">
+    img {
+/*        max-width: 100%; */
+/*        max-height: 20vw; */
+        height: 10vw;
+        border-radius: 8%;
+/*        height: auto; */
+    }
+
+    img:hover {
+        transform: scale(1.1);
+        border: goldenrod 3px solid !important
+    }
+
+    #game-view {
+        display: flex;
+        height: 66vmin;
+        border: black solid 1px;
+        justify-content: center; 
+    }
+
+    /*
+    #game-players {
+        width: 30%;
+        margin: 0.5%;
+    }
+    */
+
+    /*
+    #game-events {
+        width: 30%;
+    }
+
+    #game-score {
+        width: 30%;
+    }*/
+
+    #game-view > div {
+        width: 33.333333333%;
+        margin: 2%;
+    }
+
+    #hand {
+        display:flex; 
+        justify-content: center; 
+        border: black solid 1px; 
+        height: 32vmin
+    }
+
+</style>
+
+    </head>
+
+    <body>
+
+        <div id="game-view" >
+
+            <div id="game-players">
+                <h1>Player 1</h1>
+                <h1>Player 2</h1>
+                <h1>Player 3</h1>
+                <h1>Player 4</h1>
+            </div>
+
+            <div id="game-events">
+                <h1>Trick won !</h1>
+            </div>
+
+            <div id="game-score">
+                <h1>Team 1 : 250</h1>
+                <h1>Team 2 : 540</h1>
+            </div>
+
+        </div>
+
+        <div id='hand' style='display:flex; justify-content: center; border: black solid 1px; height: 32vmin'>
+
+
+            <div style='position: relative; right: 0%;'>
+            <img src="/images/2C.png" style='border: red 1px solid' />
+            </div>
+
+            <div style='position: relative; right: 2%'>
+            <img src="/images/JC.png" />
+            </div>
+
+            <div style='position: relative; right: 4%'>
+            <img src="/images/9C.png" />
+            </div>
+
+            <div style='position: relative; right: 6%'>
+            <img src="/images/AH.png" />
+            </div>
+
+
+            <div style='position: relative; right: 8%'>
+            <img src="/images/2D.png" />
+            </div>
+
+            <div style='position: relative; right: 10%'>
+            <img src="/images/JD.png" />
+            </div>
+
+            <div style='position: relative; right: 12%'>
+            <img src="/images/9D.png" />
+            </div>
+
+
+            <div style='position: relative; right: 14%'>
+            <img src="/images/AS.png" />
+            </div>
+
+        </div>
+    </div>
+
+
+
+    </body>
+
+</html>
